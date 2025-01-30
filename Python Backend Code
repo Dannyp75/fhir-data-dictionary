@@ -1,0 +1,113 @@
+# requirements.txt
+flask==2.3.3
+flask-cors==4.0.0
+pandas==2.1.0
+openpyxl==3.1.2
+python-dotenv==1.0.0
+
+# app/__init__.py
+from flask import Flask
+from flask_cors import CORS
+from config import Config
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+    CORS(app)
+    
+    from app.routes import bp
+    app.register_blueprint(bp)
+    
+    return app
+
+# app/routes.py
+from flask import Blueprint, jsonify, send_file
+import pandas as pd
+from io import BytesIO
+
+bp = Blueprint('main', __name__)
+
+MEDICATION_DATA = {
+    'MEDICATION': {
+        'description': 'Contains information about medications prescribed to patients',
+        'fields': [
+            {
+                'fieldName': 'MEDICATION_ID',
+                'description': 'Unique identifier for the medication record',
+                'fhirPath': 'MedicationRequest.identifier'
+            },
+            {
+                'fieldName': 'MEDICATION_NAME',
+                'description': 'Name of the medication',
+                'fhirPath': 'MedicationRequest.medication[x].CodeableConcept.coding.display'
+            },
+            # Add more fields as needed
+        ]
+    },
+    'MEDICATION_ADMINISTRATION': {
+        'description': 'Records of medication administrations to patients',
+        'fields': [
+            {
+                'fieldName': 'ADMIN_ID',
+                'description': 'Unique identifier for the administration record',
+                'fhirPath': 'MedicationAdministration.identifier'
+            },
+            # Add more fields as needed
+        ]
+    }
+}
+
+@bp.route('/api/data-dictionary', methods=['GET'])
+def get_data_dictionary():
+    return jsonify(MEDICATION_DATA)
+
+@bp.route('/api/download-excel', methods=['GET'])
+def download_excel():
+    # Create a list to hold all records
+    records = []
+    
+    # Convert the nested dictionary into flat records
+    for table_name, table_data in MEDICATION_DATA.items():
+        for field in table_data['fields']:
+            records.append({
+                'Table Name': table_name,
+                'Table Description': table_data['description'],
+                'Field Name': field['fieldName'],
+                'Field Description': field['description'],
+                'FHIR Path': field['fhirPath']
+            })
+    
+    # Create DataFrame
+    df = pd.DataFrame(records)
+    
+    # Create Excel file in memory
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Data Dictionary')
+        
+        # Auto-adjust columns' width
+        worksheet = writer.sheets['Data Dictionary']
+        for idx, col in enumerate(df.columns):
+            max_length = max(
+                df[col].astype(str).apply(len).max(),
+                len(col)
+            )
+            worksheet.column_dimensions[chr(65 + idx)].width = max_length + 2
+    
+    output.seek(0)
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='data_dictionary.xlsx'
+    )
+
+# config.py
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
+    CORS_HEADERS = 'Content-Type'
