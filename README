@@ -1,0 +1,77 @@
+# FHIR Data Dictionary
+
+A web application for managing and viewing FHIR data mappings with export capabilities.
+
+## Features
+
+- Interactive web interface for viewing data dictionary
+- FHIR path mappings for medical data
+- Excel export functionality
+- Docker support for easy deployment
+- REST API endpoints for data access
+
+## Prerequisites
+
+- Python 3.9+
+- Node.js 16+
+- Docker and Docker Compose (optional)
+
+## Quick Start
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/fhir-data-dictionary.git
+cd fhir-data-dictionary
+```
+
+2. Using Docker (recommended):
+```bash
+docker-compose up --build
+```
+
+3. Manual Setup:
+
+Backend:
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+pip install -r requirements.txt
+flask run
+```
+
+Frontend:
+```bash
+cd frontend
+npm install
+npm start
+```
+
+## API Endpoints
+
+- GET `/api/data-dictionary`: Retrieve the complete data dictionary
+- GET `/api/download-excel`: Download data dictionary as Excel file
+
+## Development
+
+1. Backend Development:
+- Located in `backend/` directory
+- Flask application with RESTful endpoints
+- Uses pandas for Excel file generation
+
+2. Frontend Development:
+- Located in `frontend/` directory
+- React application with Tailwind CSS
+- Components in `src/components/`
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details
